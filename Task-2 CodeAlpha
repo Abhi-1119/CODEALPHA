@@ -1,0 +1,81 @@
+import yfinance as yf
+from prettytable import PrettyTable
+
+class StockPortfolio:
+    def __init__(self):
+        self.portfolio = {}
+
+    def add_stock(self, symbol, quantity):
+        self.portfolio[symbol] = self.portfolio.get(symbol, 0) + quantity
+        print(f"Added {quantity} shares of {symbol}.")
+
+    def remove_stock(self, symbol, quantity):
+        if symbol in self.portfolio:
+            if self.portfolio[symbol] > quantity:
+                self.portfolio[symbol] -= quantity
+                print(f"Removed {quantity} shares of {symbol}.")
+            else:
+                del self.portfolio[symbol]
+                print(f"Removed all shares of {symbol}.")
+        else:
+            print("Stock not in portfolio.")
+
+    def get_stock_price(self, symbol):
+        try:
+            stock = yf.Ticker(symbol)
+            return stock.history(period="1d")["Close"].iloc[-1]
+        except Exception as e:
+            print(f"Error fetching data for {symbol}: {e}")
+            return None
+
+    def display_portfolio(self):
+        if not self.portfolio:
+            print("Portfolio is empty.")
+            return
+
+        table = PrettyTable(["Stock", "Quantity", "Current Price ($)", "Total Value ($)"])
+        total_value = 0
+
+        for symbol, quantity in self.portfolio.items():
+            price = self.get_stock_price(symbol)
+            if price is not None:
+                total_stock_value = quantity * price
+                table.add_row([symbol, quantity, f"{price:.2f}", f"{total_stock_value:.2f}"])
+                total_value += total_stock_value
+
+        print(table)
+        print(f"Total Portfolio Value: ${total_value:.2f}")
+
+def main():
+    portfolio = StockPortfolio()
+
+    while True:
+        print("\nStock Portfolio Tracker")
+        print("1. Add Stock")
+        print("2. Remove Stock")
+        print("3. View Portfolio")
+        print("4. Exit")
+        
+        choice = input("Choose an option: ")
+
+        if choice == "1":
+            symbol = input("Enter stock symbol (e.g., AAPL, TSLA): ").upper()
+            quantity = int(input("Enter quantity: "))
+            portfolio.add_stock(symbol, quantity)
+        
+        elif choice == "2":
+            symbol = input("Enter stock symbol to remove: ").upper()
+            quantity = int(input("Enter quantity to remove: "))
+            portfolio.remove_stock(symbol, quantity)
+
+        elif choice == "3":
+            portfolio.display_portfolio()
+
+        elif choice == "4":
+            print("Exiting Portfolio Tracker. Goodbye!")
+            break
+        else:
+            print("Invalid choice. Please try again.")
+
+if __name__ == "__main__":
+    main()
